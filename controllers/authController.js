@@ -6,7 +6,7 @@ exports.registerController = async (req,res,next) => {
     try{
         const { username, password, email, fullname } = req.body
         const user = await User.findOne({$or: [{username}, {password}]})
-        if(user) throw new CustomError('User already exists', 400)
+        if(user) throw new CustomError('User already exists', 409)
         const newUser = new User({
             username,
             password,
@@ -31,8 +31,8 @@ exports.registerController = async (req,res,next) => {
 exports.loginController = async (req,res,next) => {
     try{
         const { email, username, password } = req.body
-        if(!email && !username) throw new CustomError('Please enter either username or email', 400)
-        if(!password) throw new CustomError('Please enter your password', 400)
+        if(!email && !username) throw new CustomError('Please enter either username or email.', 400)
+        if(!password) throw new CustomError('Please enter your password.', 400)
         let user
         if(username){
             user = await User.findOne({username}).select('+password')
@@ -40,9 +40,9 @@ exports.loginController = async (req,res,next) => {
         else{
             user = await User.findOne({email}).select('+password')
         }
-        if(!user) throw new CustomError('User does not exist', 400)
+        if(!user) throw new CustomError('User does not exist.', 404)
         const isValidPassword = await user.comparePasswords(password, user.password)
-        if(!isValidPassword) throw new CustomError('Password incorrect. Try again.', 404)
+        if(!isValidPassword) throw new CustomError('Password incorrect. Try again.', 401)
         const token = generateJWTtoken({id: user._id})
         res.cookie('token', token).status(200).json({
             status: 'success',
@@ -63,13 +63,3 @@ exports.logoutController = async (req,res,next) => {
         message: 'You have been successfuly logged out'
     })
 }
-
-// exports.fetchUserController = async (req,res,next) => {
-//     const user = await User.findById(req._id).select('+password -_id -__v')
-//     res.status(200).json({
-//         status: 'success',
-//         data: {
-//             user
-//         }
-//     })
-// }

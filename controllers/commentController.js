@@ -6,12 +6,12 @@ const User = require('./../models/userModel')
 exports.createCommentController = async (req,res,next) => {
     try{
         const { postId, text } = req.body
-        if(!postId || !text) throw new CustomError('All fields are required', 400)
+        if(!postId || !text) throw new CustomError('All fields are required.', 400)
         const userId = req._id
         const user = await User.findOne({_id: req._id})
-        if(!user) throw new CustomError('User not found', 400)
+        if(!user) throw new CustomError('User not found.', 404)
         const post = await Post.findOne({_id: postId})
-        if(!post) throw new CustomError('Post not found', 400)
+        if(!post) throw new CustomError('Post not found.', 404)
         const newComment = new Comment({
             user: userId,
             post: postId,
@@ -29,7 +29,7 @@ exports.createCommentController = async (req,res,next) => {
     }
     catch(err){
         console.log(err)
-        if(err.name === 'CastError') err = new CustomError('Invalid post id', 400)
+        if(err.name === 'CastError') err = new CustomError('Invalid post id.', 404)
         next(err)
     }
 }
@@ -38,9 +38,9 @@ exports.createCommentReplyController = async (req,res,next) => {
     try{
         const commentId = req.params.commentId
         const parentComment = await Comment.findOne({_id: commentId})
-        if(!parentComment) throw new CustomError('Comment does not exist', 400)
+        if(!parentComment) throw new CustomError('Comment does not exist', 404)
         const text = req.body.text
-        if(!text) throw new CustomError('Please enter your reply', 400)
+        if(!text) throw new CustomError('Please enter your reply.', 400)
         const user = await User.findOne({_id: req._id})
         const reply = {
             user: user._id,
@@ -65,9 +65,9 @@ exports.updateCommentController = async (req,res,next) => {
     try{
         const commentId = req.params.commentId
         const commentToUpdate = await Comment.findOne({_id: commentId})
-        if(!commentToUpdate) throw new CustomError('Comment not found', 400)
+        if(!commentToUpdate) throw new CustomError('Comment not found.', 404)
         const text = req.body.text
-        if(!text) throw new CustomError('Enter comment text to be updated', 400)
+        if(!text) throw new CustomError('Enter comment text to be updated.', 400)
         const newComment = await Comment.findByIdAndUpdate(commentId, {
             text
         }, {
@@ -91,11 +91,11 @@ exports.updateCommentReplyController = async (req,res,next) => {
         const { commentId, replyId } = req.params
         const text = req.body.text
         const parentComment = await Comment.findOne({_id: commentId})
-        if(!parentComment) throw new CustomError('Comment not found', 400)
+        if(!parentComment) throw new CustomError('Comment not found.', 404)
         const index = parentComment.replies.findIndex(reply => reply._id.toString() === replyId)
-        if(index === -1) throw new CustomError('Reply not found', 400)
-        if(parentComment.replies[index].user.toString() !== req._id) throw new CustomError('You can only edit your own reply', 400)
-        if(!text) throw new CustomError('Please enter the text', 400)
+        if(index === -1) throw new CustomError('Reply not found.', 404)
+        if(parentComment.replies[index].user.toString() !== req._id) throw new CustomError('You can only edit your own reply.', 404)
+        if(!text) throw new CustomError('Please enter the text.', 400)
         parentComment.replies[index].text = text
         const comment = await parentComment.save()
         res.status(200).json({
@@ -124,7 +124,7 @@ exports.getCommentsByPostController = async (req,res,next) => {
     try{
         const postId = req.params.postId
         const post = await Post.findOne({_id: postId})
-        if(!post) throw new CustomError('Post not found', 400)
+        if(!post) throw new CustomError('Post not found.', 400)
         const comments = await Comment.find({post: post._id})
         await populateComments(comments)
         res.status(200).json({
@@ -144,7 +144,7 @@ exports.deleteCommentReplyController = async (req,res,next) => {
     try{
         const { commentId, replyId } = req.params
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
+        if(!comment) throw new CustomError('Comment not found.', 400)
         comment.replies = comment.replies.filter(reply => reply._id.toString() !== replyId)
         comment = await comment.save()
         res.status(200).json({
@@ -164,9 +164,8 @@ exports.likeCommentController = async (req,res,next) => {
     try{
         const commentId = req.params.commentId
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
-        // if(comment.likes.some(user => user._id.toString() === req._id)) throw new CustomError('You have already liked this comment', 400)
-        if(comment.likes.includes(req._id)) throw new CustomError('You have already liked this comment', 400) // WHY IS THIS WORKING NOW?
+        if(!comment) throw new CustomError('Comment not found.', 400)
+        if(comment.likes.includes(req._id)) throw new CustomError('You have already liked this comment.', 409)
         const user = await User.findOne({_id: req._id})
         comment.likes.push(user._id)
         await comment.save()
@@ -185,8 +184,8 @@ exports.unlikeCommentController = async (req,res,next) => {
     try{
         const commentId = req.params.commentId
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
-        if(!comment.likes.includes(req._id)) throw new CustomError('You have not liked this comment', 400)
+        if(!comment) throw new CustomError('Comment not found.', 400)
+        if(!comment.likes.includes(req._id)) throw new CustomError('You have not liked this comment.', 409)
         const user = await User.findOne({_id: req._id})
         comment.likes = comment.likes.filter(user => user._id.toString() !== req._id)
         await comment.save()
@@ -205,10 +204,10 @@ exports.likeCommentReplyController = async (req,res,next) => {
     try{
         const { commentId, replyId } = req.params
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
+        if(!comment) throw new CustomError('Comment not found.', 404)
         const replyIndex = comment.replies.findIndex(reply => reply._id.toString() === replyId)
         if(replyIndex === -1) throw new CustomError('Reply not found', 400)
-        if(comment.replies[replyIndex].likes.includes(req._id)) throw new CustomError('You have already liked this reply', 400)
+        if(comment.replies[replyIndex].likes.includes(req._id)) throw new CustomError('You have already liked this reply.', 409)
         comment.replies.likes = comment.replies[replyIndex].likes.push(req._id)
         await comment.save()
         res.status(200).json({
@@ -226,10 +225,10 @@ exports.unlikeCommentReplyController = async (req,res,next) => {
     try{
         const { commentId, replyId } = req.params
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
+        if(!comment) throw new CustomError('Comment not found.', 404)
         const replyIndex = comment.replies.findIndex(reply => reply._id.toString() === replyId)
-        if(replyIndex === -1) throw new CustomError('Reply not found', 400)
-        if(!comment.replies[replyIndex].likes.includes(req._id)) throw new CustomError('You have not liked this reply', 400)
+        if(replyIndex === -1) throw new CustomError('Reply not found.', 404)
+        if(!comment.replies[replyIndex].likes.includes(req._id)) throw new CustomError('You have not liked this reply.', 409)
         comment.replies[replyIndex].likes = comment.replies[replyIndex].likes.filter(user => user._id.toString() !== req._id)
         await comment.save()
         res.status(200).json({
@@ -247,7 +246,7 @@ exports.deleteCommentController = async (req,res,next) => {
     try{
         const commentId = req.params.commentId
         const comment = await Comment.findOne({_id: commentId})
-        if(!comment) throw new CustomError('Comment not found', 400)
+        if(!comment) throw new CustomError('Comment not found.', 404)
         await Post.findOneAndUpdate({comments: commentId}, {$pull: {comments: commentId}})
         await comment.deleteOne()
         res.status(200).json({

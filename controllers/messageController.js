@@ -29,7 +29,7 @@ exports.getMessagesController = async (req,res,next) => {
     try{
         const conversationId = req.params.conversationId
         const access = await Conversation.findOne({_id: conversationId, participants: {$in: req._id}})
-        if(!access) throw new CustomError('You cannot get these conversations', 400)
+        if(!access) throw new CustomError('You cannot get these conversations.', 404)
         const messages = await Message.find({conversation_id: conversationId})
         res.status(200).json({
             status: 'success',

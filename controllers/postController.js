@@ -9,7 +9,7 @@ exports.createPostController = async (req,res,next) => {
     try{
         const { caption } = req.body
         const user = await User.findOne({_id: req._id})
-        if(!user) throw new CustomError('User does not exist', 400)
+        if(!user) throw new CustomError('User does not exist.', 404)
         const newPost = new Post({
             user: req._id,
             caption
@@ -50,8 +50,8 @@ exports.createPostWithImageController = async (req,res,next) => {
     try{
         const { caption } = req.body
         const user = await User.findOne({_id: req._id})
-        if(!user) throw new CustomError('User does not exist', 400)
-        if(!req.files) throw new CustomError('Please upload post images', 400)
+        if(!user) throw new CustomError('User does not exist.', 404)
+        if(!req.files) throw new CustomError('Please upload post images.', 400)
         const imageURLs = req.files.map(file => file.filename)
         const newPost = new Post({
             user: req._id,
@@ -79,7 +79,7 @@ exports.updatePostController = async (req,res,next) => {
         const caption = req.body.caption
         const postId = req.params.postId
         const post = await Post.findOne({_id: postId})
-        if(!post) throw new CustomError('Post not found', 400)
+        if(!post) throw new CustomError('Post not found.', 404)
         if(caption) post.caption = caption
         post = await post.save()
         res.status(200).json({
@@ -98,7 +98,7 @@ exports.updatePostController = async (req,res,next) => {
 exports.getUserPostsController = async (req,res,next) => {
     try{
         const user = await User.findOne({_id: req._id}).populate('posts', 'caption images likes comments')
-        if(!user) throw new CustomError('User does not exist', 400)
+        if(!user) throw new CustomError('User does not exist.', 404)
         const posts = user.posts
         res.status(200).json({
             status: 'success',
@@ -118,7 +118,7 @@ exports.likePostController = async (req,res,next) => {
         const postId = req.params.postId
         let post = await Post.findOne({_id: postId})
         if(!post) throw new CustomError('Post not found', 400)
-        if(post.likes.includes(new mongoose.Types.ObjectId(req._id))) throw new CustomError('You already like this post', 400)
+        if(post.likes.includes(new mongoose.Types.ObjectId(req._id))) throw new CustomError('You already like this post.', 400)
         post.likes.push(new mongoose.Types.ObjectId(req._id))
         await post.save()
         res.status(200).json({
@@ -136,8 +136,8 @@ exports.unlikePostController = async (req,res,next) => {
     try{
         const postId = req.params.postId
         let post = await Post.findOne({_id: postId})
-        if(!post) throw new CustomError('Post not found', 400)
-        if(!post.likes.includes(new mongoose.Types.ObjectId(req._id))) throw new CustomError('You have not liked this post', 400)
+        if(!post) throw new CustomError('Post not found.', 404)
+        if(!post.likes.includes(new mongoose.Types.ObjectId(req._id))) throw new CustomError('You have not liked this post.', 400)
         post.likes = post.likes.filter(id => id.toString() !== req._id)
         await post.save()
         res.status(200).json({
@@ -155,7 +155,7 @@ exports.deletePostController = async (req,res,next) => {
     try{
         const postId = req.params.postId
         let post = await Post.findById(postId)
-        if(!post) throw new CustomError('Post not found', 400)
+        if(!post) throw new CustomError('Post not found.', 400)
         const user = await User.findById(req._id)
         user.posts = user.posts.filter(post => post.toString() !== postId)
         await post.deleteOne()

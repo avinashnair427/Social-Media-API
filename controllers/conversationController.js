@@ -5,8 +5,8 @@ const Message = require('./../models/messageModel')
 exports.createConversationController = async (req,res,next) => {
     try{
         const { firstUser, secondUser } = req.body
-        if(!firstUser || !secondUser) throw new CustomError('All fields are required', 400)
-        if(firstUser !== req._id) throw new CustomError('Only you can start a conversation with someone else', 400)
+        if(!firstUser || !secondUser) throw new CustomError('All fields are required.', 400)
+        if(firstUser !== req._id) throw new CustomError('Only you can start a conversation with someone else.', 400)
         let conversation = await new Conversation({participants: [firstUser,secondUser]})
         conversation = await conversation.save()
         res.status(200).json({
@@ -63,7 +63,7 @@ exports.deleteConversationController = async (req,res,next) => {
         await Conversation.findByIdAndDelete(conversationId)
         res.status(200).json({
             status: 'success',
-            message: 'Conversation has been deleted'
+            message: 'Conversation has been deleted.'
         })
     }
     catch(err){

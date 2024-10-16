@@ -1,5 +1,4 @@
 const express = require('express')
-const verifyToken = require('../utils/verifyToken')
 const { 
     registerController, 
     loginController, 

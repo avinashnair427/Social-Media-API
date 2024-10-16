@@ -7,7 +7,7 @@ const multer = require('multer')
 exports.getUserController = async (req,res,next) => {
     try{
         const user = await User.findById(req._id).select('-_id -__v')
-        if(!user) throw new CustomError('User not found', 400)
+        if(!user) throw new CustomError('User not found.', 404)
         res.status(200).json({
             status: 'success',
             data: {
@@ -48,11 +48,11 @@ exports.updateUserController = async (req,res,next) => {
 exports.followUserController = async (req,res,next) => {
     try{
         const userToFollowId = req.params.userId
-        if(userToFollowId === req._id) throw new CustomError('You cannot follow yourself', 400)
+        if(userToFollowId === req._id) throw new CustomError('You cannot follow yourself.', 400)
         const userToFollow = await User.findOne({_id: userToFollowId})
         const loggedInUser = await User.findOne({_id: req._id})
-        if(!userToFollow || !loggedInUser) throw new CustomError('User not found', 400)
-        if(loggedInUser.following.includes(userToFollow._id)) throw new CustomError('You already follow this user', 400)
+        if(!userToFollow || !loggedInUser) throw new CustomError('User not found.', 404)
+        if(loggedInUser.following.includes(userToFollow._id)) throw new CustomError('You already follow this user.', 400)
         loggedInUser.following.push(userToFollow._id)
         userToFollow.followers.push(loggedInUser._id)
         await loggedInUser.save()
@@ -63,7 +63,7 @@ exports.followUserController = async (req,res,next) => {
         })
     }
     catch(err){
-        if(err.name === 'CastError') err = new CustomError('Invalid user id', 400)
+        if(err.name === 'CastError') err = new CustomError('Invalid user id.', 404)
         next(err)
     }
 }
@@ -71,12 +71,12 @@ exports.followUserController = async (req,res,next) => {
 exports.unfollowUserController = async (req,res,next) => {
     try{
         const userToUnfollowId = req.params.userId
-        if(userToUnfollowId === req._id) throw new CustomError('You cannot unfollow yourself', 400)
+        if(userToUnfollowId === req._id) throw new CustomError('You cannot unfollow yourself.', 400)
         const userToUnfollow = await User.findOne({_id: userToUnfollowId})
         const loggedInUser = await User.findOne({_id: req._id})
-        if(!userToUnfollow || !loggedInUser) throw new CustomError('User not found', 400)
+        if(!userToUnfollow || !loggedInUser) throw new CustomError('User not found.', 404)
         let index = loggedInUser.following.indexOf(userToUnfollow._id)
-        if(index === -1) throw new CustomError('You do not follow this user', 400)
+        if(index === -1) throw new CustomError('You do not follow this user.', 400)
         loggedInUser.following = loggedInUser.following.filter(id => id.toString() !== userToUnfollowId)
         userToUnfollow.followers = userToUnfollow.followers.filter(id => id.toString() !== req._id)
         await loggedInUser.save()
@@ -87,7 +87,7 @@ exports.unfollowUserController = async (req,res,next) => {
         })
     }
     catch(err){
-        if(err.name === 'CastError') err = new CustomError('Invalid user id', 400)
+        if(err.name === 'CastError') err = new CustomError('Invalid user id.', 404)
         next(err)
     }
 }
@@ -95,11 +95,11 @@ exports.unfollowUserController = async (req,res,next) => {
 exports.blockUserController = async (req,res,next) => {
     try{
         const userToBlockId = req.params.userId
-        if(userToBlockId === req._id) throw new CustomError('You cannot block yourself', 400)
+        if(userToBlockId === req._id) throw new CustomError('You cannot block yourself.', 400)
         const userToBlock = await User.findOne({_id: userToBlockId})
         const loggedInUser = await User.findOne({_id: req._id})
-        if(!userToBlock || !loggedInUser) throw new CustomError('User not found', 400)
-        if(loggedInUser.blocklist.includes(userToBlock._id)) throw new CustomError('You have already blocked this user', 400)
+        if(!userToBlock || !loggedInUser) throw new CustomError('User not found.', 404)
+        if(loggedInUser.blocklist.includes(userToBlock._id)) throw new CustomError('You have already blocked this user.', 400)
         loggedInUser.blocklist.push(userToBlock._id)
         loggedInUser.following = loggedInUser.following.filter(id => id.toString() !== userToBlockId)
         userToBlock.followers = userToBlock.followers.filter(id => id.toString() !== req._id)
@@ -111,7 +111,7 @@ exports.blockUserController = async (req,res,next) => {
         })
     }
     catch(err){
-        if(err.name === 'CastError') err = new CustomError('Invalid user id', 400)
+        if(err.name === 'CastError') err = new CustomError('Invalid user id.', 404)
         next(err)
     }
 }
@@ -119,12 +119,12 @@ exports.blockUserController = async (req,res,next) => {
 exports.unblockUserController = async (req,res,next) => {
     try{
         const userToUnblockId = req.params.userId
-        if(userToUnblockId === req._id) throw new CustomError('You cannot unblock yourself', 400)
+        if(userToUnblockId === req._id) throw new CustomError('You cannot unblock yourself.', 400)
         const userToUnblock = await User.findOne({_id: userToUnblockId})
         const loggedInUser = await User.findOne({_id: req._id})
-        if(!userToUnblock || !loggedInUser) throw new CustomError('User not found', 400)
+        if(!userToUnblock || !loggedInUser) throw new CustomError('User not found.', 404)
         let index = loggedInUser.blocklist.indexOf(userToUnblock._id)
-        if(index === -1) throw new CustomError('You have not blocked this user', 400)
+        if(index === -1) throw new CustomError('You have not blocked this user.', 400)
         loggedInUser.blocklist = loggedInUser.blocklist.filter(id => id.toString() !== userToUnblockId)
         loggedInUser.save()
         res.status(200).json({
@@ -221,7 +221,7 @@ exports.profilePictureUploadMiddleware = profilePictureUpload.single('profilePic
 
 exports.uploadProfilePicture = async (req,res,next) => {
     try{
-        if(!req.file) throw new CustomError('Please upload your profile picture', 400)
+        if(!req.file) throw new CustomError('Please upload your profile picture.', 400)
         const updatedUser = await User.findOneAndUpdate({_id: req._id}, {profilePicture: `${req.file.filename}`}, {new: true})
         res.status(200).json({
             status: 'success',
@@ -255,7 +255,7 @@ exports.coverPictureUploadMiddleware = coverPictureUpload.single('coverPicture')
 
 exports.uploadCoverPicture = async (req,res,next) => {
     try{
-        if(!req.file) throw new CustomError('Please upload your cover picture', 400)
+        if(!req.file) throw new CustomError('Please upload your cover picture.', 400)
         const updatedUser = await User.findOneAndUpdate({_id: req._id}, {coverPicture: `${req.file.filename}`}, {new: true})
         res.status(200).json({
             status: 'success',

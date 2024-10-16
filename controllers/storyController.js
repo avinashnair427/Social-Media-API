@@ -83,7 +83,7 @@ exports.deleteStoryController = async (req,res,next) => {
     const storyId = req.params.storyId
     try{
         const story = await Story.findOne({_id: storyId})
-        if(story.user._id.toString() !== req._id) throw new CustomError('You can only delete your own story', 400)
+        if(story.user._id.toString() !== req._id) throw new CustomError('You can only delete your own story.', 400)
         await story.deleteOne()
         res.status(200).json({
             status: 'success',
